@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, Inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,30 +7,49 @@ import {
   Validators,
 } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
+import { CountryService } from './services/country.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, FormsModule, ReactiveFormsModule],
+  imports: [RouterOutlet, FormsModule, ReactiveFormsModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
 export class AppComponent {
-  title = 'entwicklerCase';
-  personForm!: FormGroup;
-  countries: { code: string, name: string }[] = [];
-  
-  constructor(private formBuilder: FormBuilder) {
+  public title = 'Entwickler Case';
+  public personForm!: FormGroup;
+  public countries: { code: string; name: string }[] = [];
+  private countryService = inject(CountryService);
+  public salutation = ['Herr', 'Frau', 'Divers'];
+  public invalid: boolean = false;
+
+  constructor(private formBuilder: FormBuilder) {}
+
+  ngOnInit(): void {
     this.createContactForm();
+    this.countryService.getCountries().subscribe((data) => {
+      this.countries = data;
+    });
   }
 
   onSubmit() {
+    if(!this.personForm.get('plz')?.valid){
+      this.personForm.get('plz')?.setValue('');
+      this.personForm.get('plz')?.updateValueAndValidity();
+    }
     if (this.personForm.valid) {
-      console.log('Formular erfolgreich abgesendet: ' + JSON.stringify(this.personForm.value));
+      console.log(
+        'Formular erfolgreich abgesendet: ' +
+          JSON.stringify(this.personForm.value)
+      );
+      this.invalid = false;
     } else {
       console.log('Bitte überprüfen Sie die Eingabefelder.');
-    }}
-
+      this.invalid = true;
+    }
+  }
   createContactForm() {
     this.personForm = this.formBuilder.group({
       anrede: [''],
@@ -40,7 +59,7 @@ export class AppComponent {
       adresse: [''],
       plz: ['', [Validators.pattern(/^[0-9]{5}$/)]],
       ort: [''],
-      land: ['',],
+      land: ['', Validators.required],
     });
   }
 

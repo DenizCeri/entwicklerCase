@@ -1,21 +1,27 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CountryService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  constructor() {}
 
   getCountries(): Observable<{ code: string; name: string }[]> {
-    return this.http.get('assets/countries.csv', { responseType: 'text' }).pipe(
-      map((data) =>
-        data.split('\n').map((line) => {
-          const [code, name] = line.split(';');
-          return { code: code.trim(), name: name.trim() };
-        })
-      )
-    );
+    return this.http
+      .get('/assets/countries.csv', { responseType: 'text' })
+      .pipe(
+        map((data) =>
+          data
+            .split('\n')
+            .filter((line) => line.trim() !== '')
+            .map((line) => {
+              const [code, name] = line.split(';');
+              return { code: code.trim(), name: name.trim() };
+            })
+        )
+      );
   }
 }
